@@ -34,7 +34,7 @@ public class Union {
             s[pu] += s[pv];
             p[pv] = pu;
         } else {
-            s[pv] += pu;
+            s[pv] += s[pu];
             p[pu] = pv; 
         }
         comps--;

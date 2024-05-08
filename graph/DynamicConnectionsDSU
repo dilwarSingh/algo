@@ -1,0 +1,185 @@
+import java.io.*;
+import java.util.*;
+
+public final class Main {
+    public static void main(String[] args) throws IOException {
+
+        BufferedReader in = new BufferedReader(new FileReader("connect.in"));
+        PrintStream out = new PrintStream("connect.out");
+        System.setOut(out);
+
+        StringTokenizer st = new StringTokenizer(in.readLine());
+        int n = Integer.parseInt(st.nextToken());
+        int q = Integer.parseInt(st.nextToken());
+
+        Map<Pair, Integer> map = new HashMap<>();
+        List<Integer> queries = new ArrayList<>();
+
+        SegmentTree sg = new SegmentTree(q + 1);
+        Union union = new Union(n);
+
+        for (int i = 0; i < q; i++) {
+            st = new StringTokenizer(in.readLine());
+            char op = st.nextToken().charAt(0);
+            if (op != '?') {
+                int u = Integer.parseInt(st.nextToken()) - 1;
+                int v = Integer.parseInt(st.nextToken()) - 1;
+                Pair p = getPair(u, v);
+                if (op == '+') {
+                    map.put(p, i);
+                } else {
+                    if (!map.containsKey(p)) continue;
+                    int start = map.remove(p);
+                    sg.update(start, i, p);
+                }
+            } else queries.add(i);
+        }
+
+        for (var key : map.keySet()) {
+            sg.update(map.get(key), q, key);
+        }
+        List<Integer> res = new ArrayList<>();
+        sg.search(union, res);
+
+        // List<Integer> ans = new ArrayList<>();
+        for (Integer query : queries) {
+            // ans.add(res.get(query));
+            System.out.println(res.get(query));
+        }
+    }
+
+
+    static class SegmentTree {
+        int n;
+        Node head;
+
+        public SegmentTree(int n) {
+            this.n = n;
+            head = buildTree(0, n - 1);
+        }
+
+        public Node buildTree(int l, int r) {
+            Node cur = new Node();
+            if (l == r) {
+                return cur;
+            }
+
+            int m = l + (r - l) / 2;
+            cur.left = buildTree(l, m);
+            cur.right = buildTree(m + 1, r);
+            return cur;
+        }
+
+        public void update(int st, int ed, Pair p) {
+            update(0, n - 1, st, ed, p, head);
+        }
+
+        public Node update(int l, int r, int st, int ed, Pair p, Node cur) {
+            if (st <= l && r <= ed) {
+                cur.pairs.add(p);
+                return cur;
+            }
+            if (r < st || ed < l) return null;
+
+            int m = l + (r - l) / 2;
+            update(l, m, st, ed, p, cur.left);
+            update(m + 1, r, st, ed, p, cur.right);
+            return cur;
+        }
+
+        public void search(Union union, List<Integer> res) {
+            search(union, res, head);
+        }
+
+        private void search(Union union, List<Integer> res, Node cur) {
+            if (cur == null)
+                return;
+            int count = union.getLogsCount();
+
+            for (Pair pair : cur.pairs)
+                union.unite(pair.u, pair.v);
+
+            search(union, res, cur.left);
+            search(union, res, cur.right);
+            if (cur.left == null && cur.right == null) {
+                res.add(union.comps);
+            }
+            union.rollback(count);
+        }
+    }
+
+    public static class Union {
+        Stack<Log> history;
+        private int[] p, s;
+        int comps;
+
+        public Union(int n) {
+            comps = n;
+            p = new int[n];
+            s = new int[n];
+            history = new Stack<>();
+
+            for (int i = 0; i < n; i++) {
+                p[i] = i;
+                s[i] = 1;
+            }
+        }
+
+        public int find(int u) {
+            if (u == p[u]) return u;
+            return find(p[u]);
+        }
+
+        public boolean unite(int u, int v) {
+            int pu = find(u);
+            int pv = find(v);
+
+            if (pu == pv) return false;
+
+            history.push(new Log(pu, s[pu], p[pu], comps));
+            history.push(new Log(pv, s[pv], p[pv], comps));
+
+            if (s[pu] > s[pv]) {
+                s[pu] += s[pv];
+                p[pv] = pu;
+            } else {
+                s[pv] += s[pu];
+                p[pu] = pv;
+            }
+            comps--;
+            return true;
+        }
+
+        public int getLogsCount() {
+            return history.size();
+        }
+
+        public void rollback(int till) {
+            while (history.size() > till) {
+                Log lu = history.pop();
+                s[lu.id] = lu.sVal;
+                p[lu.id] = lu.pVal;
+
+                Log lv = history.pop();
+                s[lv.id] = lv.sVal;
+                p[lv.id] = lv.pVal;
+                comps = lv.comps;
+            }
+        }
+
+        record Log(int id, int sVal, int pVal, int comps) {
+        }
+    }
+
+    static Pair getPair(int u, int v) {
+        return new Pair(Math.min(u, v), Math.max(u, v));
+    }
+
+    record Pair(int u, int v) {
+    }
+
+    static class Node {
+        Node left, right;
+        List<Pair> pairs = new ArrayList<>();
+    }
+}

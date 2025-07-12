@@ -1,5 +1,5 @@
 
-    public class SegmetTree {
+    public class SegmentTree {
         class Node {
             Node left, right;
             int val;

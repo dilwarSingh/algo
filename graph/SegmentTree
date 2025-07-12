@@ -1,0 +1,67 @@
+  class SegmentTree {
+        Node head;
+        int n;
+
+        public SegmentTree(int n) {
+            this.n = n;
+            head = buildTree(0, n - 1);
+        }
+
+        Node buildTree(int s, int e) {
+            if (s == e)
+                return new Node(0);
+
+            int m = s + (e - s) / 2;
+            Node node = new Node(0);
+
+            node.left = buildTree(s, m);
+            node.right = buildTree(m + 1, e);
+            return node;
+        }
+
+        void add(int k, int v) {
+            add(0, n - 1, head, k, v);
+        }
+
+        Node add(int s, int e, Node cur, int key, int val) {
+            if (e < key || key < s)
+                return cur;
+            if (s == e && s == key) {
+                cur.val = val;
+                return cur;
+            }
+
+            int m = s + (e - s) / 2;
+            add(s, m, cur.left, key, val);
+            add(m + 1, e, cur.right, key, val);
+
+            cur.val = Math.max(cur.left.val, cur.right.val);
+            return cur;
+        }
+
+        int searchMaxInRange(int l, int r) {
+            return searchMaxInRange(0, n - 1, head, l, r);
+        }
+
+        int searchMaxInRange(int s, int e, Node cur, int l, int r) {
+            if (e < l || r < s)
+                return 0;
+            if (l <= s && e <= r)
+                return cur.val;
+
+            int m = s + (e - s) / 2;
+
+            int a = searchMaxInRange(s, m, cur.left, l, r);
+            int b = searchMaxInRange(m + 1, e, cur.right, l, r);
+
+            return Math.max(a, b);
+        }
+    class Node {
+        Node left, right;
+        int val;
+
+        public Node(int v) {
+            val = v;
+        }
+    }
+}

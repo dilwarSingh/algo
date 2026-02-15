@@ -4,7 +4,7 @@ class Solution {
     SegmentTree sg;
     HeavyLight hl;
 
-    // Code start here
+    // Code start here LC:"Palindromic Path Queries in a Tree"
     public List<Boolean> palindromePath(int n, int[][] edges, String s, String[] queries) {
         tree = new ArrayList[n];
         for (int i = 0; i < n; i++)

@@ -1,8 +1,3 @@
-package graph;
-
-/**
- * Union
- */
 public class Union {
 
     private int[] p, s;
